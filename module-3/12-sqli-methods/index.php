@@ -1,3 +1,7 @@
+<?php
+require_once dirname(__DIR__, 2) . '/data/connect.php'; // include the connect.php file to establish a connection to the database and define the db_connect() and db_disconnect() functions
+$conn = db_connect(); // establish a connection to the database using the db_connect() function defined in connect.php 
+?>
 <!doctype html>
 <html lang="en">
 
