@@ -1,6 +1,6 @@
 <?php
 require_once dirname(__DIR__, 2) . '/data/connect.php'; // include the connect.php file to establish a connection to the database and define the db_connect() and db_disconnect() functions
-$conn = db_connect(); // establish a connection to the database using the db_connect() function defined in connect.php 
+$connection = db_connect(); // establish a connection to the database using the db_connect() function defined in connect.php 
 ?>
 <!doctype html>
 <html lang="en">
@@ -25,6 +25,14 @@ $conn = db_connect(); // establish a connection to the database using the db_con
                 <h2 class="display-4">Questions and Answers</h2>
 
                 <h3 class="mt-4">Question 1: Which city has the highest population?</h3>
+                <?php
+                $sql = "SELECT city_name, population FROM cities ORDER BY population DESC LIMIT 1"; // define a SQL query to select the city name and population from the "cities" table, ordered by population in descending order, and limit the results to only 1 record
+                $result = mysqli_query($conn, $sql); // execute the SQL query using the mysqli_query() function
+                if (mysqli_num_rows($result) == 1) { // check if the query returned exactly one row
+                    $row = mysqli_fetch_assoc($result); // fetch the row as an associative array
+                    echo '<p>The city with the highest population is: ' . $row['city_name'] . ' with a population of ' . $row['population'] . '</p>'; // output the city name and population from the fetched row
+                }
+                ?>
 
                 <h3 class="mt-4">Question 2: What are the names of all of the cities stored in our database, in alphabetical order?</h3>
 
