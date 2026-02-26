@@ -11,6 +11,12 @@ $conn = db_connect();
     <style>
         table, td { border:1px solid black;}
         table { border-collapse: collapse;}
+        .flex {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem
+        }      
+
     </style>
 </head>
 <body>
@@ -65,17 +71,18 @@ $conn = db_connect();
     <section>
         <h2>All capital cities by province</h2>
         <?php
-            $sql3 = "SELECT city_name, province FROM `cities` WHERE is_capital = TRUE ORDER BY province";
+            $sql3 = "SELECT city_name, province, cid FROM `cities` WHERE is_capital = TRUE ORDER BY province";
             $result3 = mysqli_query($conn, $sql3);
 
             if (mysqli_num_rows($result3 ) > 0) {
                 $content = '';
                 while ($row = mysqli_fetch_assoc($result3)) {
                     extract($row);
-                    $content .= "<p>$city_name $province</p>";
+                    //  want to include a link to "single.php ? id=$cid">
+                    $content .= "<a href=\"single.php?id=$cid\">$city_name $province</a><br>";
                 }
 
-                echo "<div>$content</div>";
+                echo "<div class='flex'>$content</div>";
             } else {
                 echo '<p>No capital cities found.</p>';
             }
