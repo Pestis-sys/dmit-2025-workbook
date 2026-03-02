@@ -12,11 +12,10 @@ $conn = db_connect();
         table, td { border:1px solid black;}
         table { border-collapse: collapse;}
         .flex {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem
-        }      
-
+            display: flex;
+            flex-direction: column;
+            gap: .75rem;
+        }
     </style>
 </head>
 <body>
@@ -78,8 +77,11 @@ $conn = db_connect();
                 $content = '';
                 while ($row = mysqli_fetch_assoc($result3)) {
                     extract($row);
-                    //  want to include a link to "single.php ? id=$cid">
-                    $content .= "<a href=\"single.php?id=$cid\">$city_name $province</a><br>";
+                    // $content .= "<p>$city_name $province</p>";
+                    $content .= "<a href=\"single.php?id=$cid\">";
+                    $content .= "$city_name, $province";
+                    $content .= "</a>";
+
                 }
 
                 echo "<div class='flex'>$content</div>";
