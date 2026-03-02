@@ -9,7 +9,7 @@
 </html>
 
 <?php 
-
+db_disconnect($connection)
 // Finally, we must always close our connection to the database.
 
 ?>
