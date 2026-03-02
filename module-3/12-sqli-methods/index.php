@@ -56,6 +56,8 @@ $connection = db_connect();
 
                 <h3 class="mt-4">Question 11: Retrieve the total population for each province in the "cities" table.</h3>
 
+
+                <?php db_disconnect($connection); ?>
             </section>
         </main>
     </body>
