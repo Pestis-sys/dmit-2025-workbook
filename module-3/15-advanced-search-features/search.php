@@ -4,9 +4,17 @@ $title = "Search";
 include 'includes/header.php';
 include 'includes/continents.php';
 
-//ONLY HERE TO NOT THROW ERRORS = WE WILL FIX
-$country_search = $score = '';
-$selected_continents = array();
+$country_search = isset($_GET['country-search']) ? trim($_GET['country-search']) : "";
+
+$selected_continents = isset($_GET['continents']) ? $_GET['continents'] : array();
+
+$wellbeing_score = $_GET['wellbeing-score'] ?? "";
+// null coalescing operator = ?? look up docs 
+$wellbeing_value = $_GET['wellbeing-value'] ?? "";
+
+$max = $_GET['life-expectancy-max'] ?? 90;
+$min = $_GET['life-expectancy-min'] ?? 50;
+
 
 ?>
 <!-- Introduction Area -->
@@ -53,15 +61,19 @@ $selected_continents = array();
         <div class="mb-3">
             <label for="wellbeing-score" class="form-label">Only show countries with a score:</label>
             <select name="wellbeing-score" id="wellbeing-score" class="form-select">
-                <option value="greater" <?php if ($score == "greater") { echo "selected"; } ?> >above</option>
-                <option value="less" <?php if ($score == "less") { echo "selected"; } ?> >below</option>
+                <option value="greater" <?php if ($wellbeing_score == "greater") {
+                                            echo "selected";
+                                        } ?>>above</option>
+                <option value="less" <?php if ($wellbeing_score == "less") {
+                                            echo "selected";
+                                        } ?>>below</option>
             </select>
         </div>
 
         <!-- This will be the number or the threshold for the wellbeing score. -->
         <div class="mb-3">
             <label for="wellbeing-value" class="form-label">the following value:</label>
-            <input type="number" name="wellbeing-value" id="wellbeing-value" min="1" max="10" value="<?php echo $value; ?>" class="form-control">
+            <input type="number" name="wellbeing-value" id="wellbeing-value" min="1" max="10" value="<?php echo $wellbeing_value; ?>" class="form-control">
         </div>
     </fieldset>
 
@@ -85,5 +97,70 @@ $selected_continents = array();
         <input type="submit" id="submit" name="submit" class="btn btn-success" value="Search">
     </div>
 </form>
+
+<?php
+if (isset($_GET['submit'])) {
+    echo '<section class="row justify-content-center g-3">';
+    echo '<h2 class="display-5">Results</h2>';
+
+
+    $sql = "SELECT * FROM happiness_index Where 1=1";
+
+    if ($country_search !== "") {
+        $country_search_encoded = htmlspecialchars($country_search);
+
+        $sql .= " AND country LIKE '%$country_search_encoded%'";
+    }
+    if (!empty($selected_continents) && !in_array("", $selected_continents)) {
+        $sql .= " AND continent IN (";
+        $string = "";
+        foreach ($selected_continents as $key => $value) {
+            // echo "<p>$key - $value</p>";
+            $string .= $value . ","; 
+        }
+
+        $string = rtrim($string, ",");
+        
+        $sql .=$string;
+
+        $sql .= ")";
+    } 
+
+        if (is_numeric($wellbeing_value)) {
+            $sql .= " AND wellbeing ";
+
+            if ($wellbeing_score == 'greater') {
+                $sql .= " > ";
+            } else {
+                $sql .= " < ";
+            }
+            $sql .= $wellbeing_value;
+        } else {
+            echo "no value";
+        }
+
+        if (($min != 50 && is_numeric($min)) || ($max != 90 && is_numeric($max))) {
+            $sql .= " AND life_expectancy BETWEEN $min AND $max";
+        }
+
+    // echo $sql;
+
+    $result = mysqli_query($connection, $sql);
+
+    if ($connection->error) {
+        echo '<p>Oh No! There was a issue retrieving the data.</p>';
+    } elseif ($result->num_rows > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            echo '<div class="col-md-6 col-xl-4">';
+            include 'includes/country-card.php';
+            echo '</div>';
+        }
+    } else {
+        echo "<p>Sorry no records match those serach parameters</p>";
+    }
+    echo '</section>';
+}
+
+?>
 
 <?php include('includes/footer.php'); ?>
