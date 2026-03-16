@@ -1,20 +1,22 @@
 <?php
-// GIVE TO STUDENTS TO START LESSON
+
 $title = "Search";
 include 'includes/header.php';
 include 'includes/continents.php';
 
+// 1. set up variables that form will use 
 $country_search = isset($_GET['country-search']) ? trim($_GET['country-search']) : "";
 
+// The 'All Continents' option will have a value of "", so it will be our default value if nothing else is chosen. 
 $selected_continents = isset($_GET['continents']) ? $_GET['continents'] : array();
 
-$wellbeing_score = $_GET['wellbeing-score'] ?? ""; 
+// Wellbeing Variables
+$wellbeing_score = $_GET['wellbeing-score'] ?? "";
 $wellbeing_value = $_GET['wellbeing-value'] ?? "";
 
+// Life Expectancy Variables
 $min = $_GET['life-expectancy-min'] ?? 50;
 $max = $_GET['life-expectancy-max'] ?? 90;
-
-
 
 ?>
 <!-- Introduction Area -->
@@ -61,15 +63,15 @@ $max = $_GET['life-expectancy-max'] ?? 90;
         <div class="mb-3">
             <label for="wellbeing-score" class="form-label">Only show countries with a score:</label>
             <select name="wellbeing-score" id="wellbeing-score" class="form-select">
-                <option value="greater" <?php if ($wellbeing_score == "greater") { echo "selected"; } ?> >above</option>
-                <option value="less" <?php if ($wellbeing_score == "less") { echo "selected"; } ?> >below</option>
+                <option value="greater" <?php if ($score == "greater") { echo "selected"; } ?> >above</option>
+                <option value="less" <?php if ($score == "less") { echo "selected"; } ?> >below</option>
             </select>
         </div>
 
         <!-- This will be the number or the threshold for the wellbeing score. -->
         <div class="mb-3">
             <label for="wellbeing-value" class="form-label">the following value:</label>
-            <input type="number" name="wellbeing-value" id="wellbeing-value" min="1" max="10" value="<?php echo $wellbeing_value; ?>" class="form-control">
+            <input type="number" name="wellbeing-value" id="wellbeing-value" min="1" max="10" value="<?php echo $value; ?>" class="form-control">
         </div>
     </fieldset>
 
@@ -93,67 +95,110 @@ $max = $_GET['life-expectancy-max'] ?? 90;
         <input type="submit" id="submit" name="submit" class="btn btn-success" value="Search">
     </div>
 </form>
+
 <?php
+// 2 - remove the $query variable creation as it is now country_search at top
+if (isset($_GET['submit'])) {
+    
+    echo '<section class="row justify-content-center">';
+    echo '<h2 class="display-5">Results</h2>';
 
-if (isset($_GET['submit'])) : ?>
-    <section class="row justify-content-center g-3">
-    <h2 class="display-5">Results</h2>
-
-    <?php
     $sql = "SELECT * FROM happiness_index WHERE 1=1";
+    //3 - create an array for the parameters (?) and a string for the datatypes
+    $parameters = [];
+    $datatypes = "";
 
-    if ($country_search != "") {
-        $country_search_encoded = htmlspecialchars($country_search);
-        $sql .= " AND country LIKE '%$country_search_encoded%'";
+    // 4 - update this $query to be country search and add it to the placeholder and datatypes
+    if ($country_search != "" ) {
+        $sql .= " AND country LIKE CONCAT('%', ?, '%')";
+        $parameters[] = $country_search;
+        $datatypes .= "s";
     }
 
-
+    // 5  - continents
+    // if use chose all then skip this block 
     if (!empty($selected_continents) && !in_array("", $selected_continents)) {
-        $sql .= " AND continent IN (";
-        $string = "";
+        // creates a string with the right number of ?'s
+        $placeholders = implode(',' , array_fill(0, count($selected_continents), '?'));
+        $sql .= " AND continent IN ($placeholders)";
+
+        // get values from checkboxes for parameters
         foreach ($selected_continents as $key => $value) {
-            // echo "<p>$key - $value</p>";
-            $string .= $value . ",";
+        
+            $parameters[] = $value;
+            $datatypes .= "i";
         }
-        $string = rtrim($string, ",");
-        $sql .= $string;
-        // $sql .= rtrim($string, ',');
-
-        $sql .= ")";
+    }
+    //  6 - well being
+    if ($wellbeing_value != "") {
+        // This is a ternery that says if our $score is "greater" we'll use the > (greater than) operator, otherwise we'll use less than (<).
+        $operator = $score == "greater" ? ">" : "<";
+        $sql .= " AND wellbeing $operator ?";
+        $parameters[] = &$wellbeing_value;
+        // This is a double data type.
+        $datatypes .= 'd';
     }
 
-    if (is_numeric($wellbeing_value)) {
-        $sql .= " AND wellbeing ";
+    // 7 - life expectancy
+    if ($min != 50 || $max != 90) {
+        $sql .= " AND life_expectancy BETWEEN ? AND ?";
 
-        if ($wellbeing_score == 'greater') {
-            $sql .= " > ";
+        // We will always have two values to add with a range query. 
+        $parameters[] = &$min;
+        $parameters[] = &$max;
+
+        // Both of our values are doubles.
+        $datatypes .= 'dd';
+    }
+
+    // 8 - see what is in parameters
+        // echo "<p>" . $sql . "</p><pre>";
+        // var_dump($parameters);
+        // echo "</pre><p>" . $datatypes . "</p>";
+
+
+    if ($statement = $connection->prepare($sql) ) {
+
+        // 9 - are there any parameters to bind?
+        if ($datatypes != "") {
+            // 10 - create an array to hold all the stuff we need to give to our sql
+            $bind_names = [];
+            // add data types first
+            $bind_names[] = $datatypes;
+            // loop through parameters
+            foreach ($parameters as $key => $value) {
+                $bind_names[] = &$parameters[$key];
+            }
+            
+            
+;            // call bind param on statement and pass it bind names
+            call_user_func_array([$statement, 'bind_param'], $bind_names);
+        }
+
+
+        
+        $statement->execute();
+        $result = $statement->get_result();
+
+        if ($result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                 echo "<div class=\"col-md-6 col-xl-4 mb-4\">";
+                include('includes/country-card.php');
+                echo "</div>";
+            }
         } else {
-            $sql .= " < ";
+            echo "<p>Sorry, no results found for the search term <b>$sql</b></p>";
         }
-        $sql .= $wellbeing_value;
-
-    }
-
-    if (($min != 50 && is_numeric($min)) || ($max != 90 && is_numeric($max)) ) {
-        $sql .= " AND life_expectancy BETWEEN $min AND $max";
-    }
-
-    // echo $sql;
-    $result = mysqli_query($connection, $sql);
-    if ($connection->error) {
-        echo '<p>Oh no! There was an issue retrieving the data.</p>';
-    } elseif ($result->num_rows > 0) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            echo '<div class="col-md-6 col-xl-4">';
-            include 'includes/country-card.php';
-            echo '</div>';
-        }     
     } else {
-        echo '<p>Sorry no records match those search parameters.</p>';
+        echo "<div class=\"col-md-6\">";
+        echo "<h2>Oops!</h2>";
+        echo "<p>There was an error retrieving your results.</p>";
+        echo "</div>";
     }
-    ?>
 
 
-    </section>
-<?php endif; ?>
+    echo "</section>";
+}
+?>
+
 <?php include('includes/footer.php'); ?>
