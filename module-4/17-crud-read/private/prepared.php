@@ -16,5 +16,34 @@
     7. For SELECT queries, retrieve the result set using $statement->get_result().
     8. Close the prepared statement after finished to free up server resources.
 */
+function get_all_cities(){
+      $sql = "SELECT * FROM cities";
+      $result = execute_prepared_statment($sql);
 
+      return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+function execute_prepared_statment($query, $parameters = [], $types = '') {
+    global $connection;
+
+    $statement = $connection->prepare($query);
+
+    if (!$statement) {
+        die("Preparation failed: " . $connection->error);
+    }
+
+    if (!empty($parameters)) {
+        $statement->bind_param($types, ...$parameters);
+        // ... = splat operator 
+    }
+
+    if (!$statement->execute()) {
+        die("Execute failed: " .$statement->error);
+    }
+
+    if (str_starts_with($query, "SELECT")) {
+        return $statement->get_result();
+    }
+    return true;
+}
 ?>
