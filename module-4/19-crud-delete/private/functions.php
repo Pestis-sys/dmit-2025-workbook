@@ -17,7 +17,7 @@ $provincial_abbr = [
 ];
 
 
-function generate_table() {
+function generate_table($button_callback = null) {
     $cities = get_all_cities();
 
     if (count($cities) > 0) : ?>
@@ -25,8 +25,12 @@ function generate_table() {
             <thead>
                 <tr class="table-dark">
                     <th>City Name</th>
-                    <th>Province</th>
                     <th>Population</th>
+                    <th>Triva</th>
+
+                    <?php if ($button_callback != null) : ?>
+                        <th>Actions</th>
+                        <?php endif ?> 
                 </tr>
             </thead>
             <tbody>
@@ -41,6 +45,11 @@ function generate_table() {
                             <td><?= "$capital $city_name, $province";?></td>
                             <td><?= $population ?></td>
                             <td><?= $trivia_info ?></td>
+                            <?php if ($button_callback != null) : 
+                                $button = call_user_func($button_callback, $city);
+                                echo "<td>$button</td>";
+                                 endif ?> 
+                            
                         </tr>
                         <?php
                     }
