@@ -54,5 +54,5 @@ endif;
 
 
 <?php include 'includes/footer.php';
-
+// this is a test
 ?>
