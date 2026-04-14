@@ -1,0 +1,51 @@
+<!-- 
+
+PROGRAM SPECS & FLOW: We're going to create a small website that has just two pages:
+
+1. index.php: this is where the user will be given a form that prompts them to upload an image, along with a title and description. When the user submits the form, it will create two versions of the image (a 256x256 square thumbnail that retains the original aspect ratio and a 720p full version of the image).
+
+2. gallery.php: this will fetch the thumbnails for each image and allow the user to view a larger version of each.
+
+Our project directory will look like this:
+
+/22-image-uploads
+/images
+    /full
+    /thumbs
+index.php
+gallery.php
+upload.php
+
+... but the images/ folder and everything inside will only exist on the server.
+
+We will also need a table (see `init.sql`) in order to store some metadata for each image.
+
+-->
+
+<?php
+$page_title = 'Image upload';
+include 'includes/header.php';
+
+include 'includes/upload.php';
+?>
+
+<form action="<?= htmlspecialchars($_SERVER['PHP_SELF']) ?>" method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+        <label for="img-title" class="form-label">Image Title</label>
+        <input type="text" class="form-control" id="img-title" name="img-title" value="<?= $img_title; ?>">
+    </div>
+    <div class="mb-3">
+        <label for="img-description" class="form-label">Image Description</label>
+        <input type="text" class="form-control" id="img-description" name="img-description" value="<?= $img_description; ?>">
+    </div>
+    <div class="mb-3">
+        <label for="img-file">Image File</label>
+        <input type="file" name="img-file" id="img-file" class="form-control" accept=".png, .jpg, .jpeg, .webp, .avif">
+        <p class="form-text">The following file types are accepted: .png, .jpg, .jpeg, .webp, .avif</p>
+    </div>
+    <input type="submit" value="Upload image" name="submit" class="btn btn-primary">
+</form>
+
+<?php
+include 'includes/footer.php';
+?>
